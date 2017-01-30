@@ -16,25 +16,21 @@ class Estoque
     end
   end
 
-  def quantidade_de_vendas_por(produto, &campo)
-    @vendas.count do |venda|
-      campo.call(venda) == campo.call(produto)
+  def method_missing(name)
+    matcher = name.to_s.match "(.+)_que_mais_vendeu_por_(.+)"
+
+    if matcher
+      tipo = matcher[1]
+      campo = matcher[2].to_sym  #pois precisamos converter para simbolo
+      que_mais_vendeu_por(tipo, &campo)
+    else
+      ""
+      super
     end
   end
 
-  def que_mais_vendeu_por(tipo, &campo)
-
-    @vendas.select{|l| l.tipo == tipo}.sort{ |v1, v2|
-      quantidade_de_vendas_por(v1, &campo) <=> quantidade_de_vendas_por(v2, &campo)
-    }.last
-  end
-
-  def livro_que_mais_vendeu_por(&campo)
-    que_mais_vendeu_por("livro", &campo)
-  end
-
-  def revista_que_mais_vendeu_por(&campo)
-    que_mais_vendeu_por("revista", &campo)
+  def respond_to?(name)
+    name.to_s.match("(.+)_que_mais_vendeu_por_(.+)") || super
   end
 
   def mais_baratos_que(valor)
@@ -59,5 +55,19 @@ class Estoque
 
   def maximo_necessario
     @livros.maximo_necessario
+  end
+
+  private
+  def quantidade_de_vendas_por(produto, &campo)
+    @vendas.count do |venda|
+      campo.call(venda) == campo.call(produto)
+    end
+  end
+
+  def que_mais_vendeu_por(tipo, &campo)
+
+    @vendas.select{|l| l.tipo == tipo}.sort{ |v1, v2|
+      quantidade_de_vendas_por(v1, &campo) <=> quantidade_de_vendas_por(v2, &campo)
+    }.last
   end
 end
